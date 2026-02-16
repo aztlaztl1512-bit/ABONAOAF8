@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار القدرات اللفظي - النموذج الثامن</title>
+    <style>
+        :root { --primary-color: #16a085; --secondary-color: #e67e22; --bg-color: #e8f8f5; --white: #ffffff; --correct-bg: #d4edda; --wrong-bg: #f8d7da; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .quiz-card { background: var(--white); width: 95%; max-width: 850px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 8px solid var(--primary-color); text-align: center; }
+        .header-info { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .challenger-badge { background: var(--secondary-color); color: white; padding: 8px 20px; border-radius: 30px; font-weight: bold; display: inline-block; margin-bottom: 20px; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3); }
+        input[type="text"] { width: 80%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; margin: 20px 0; outline: none; text-align: center; }
+        .btn { background: var(--primary-color); color: white; padding: 12px 30px; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; margin: 5px; }
+        .btn:hover { background: #1abc9c; }
+        .timer-bar { height: 10px; background: #eee; border-radius: 5px; margin: 20px 0; overflow: hidden; }
+        .timer-progress { height: 100%; background: #e74c3c; width: 100%; transition: width 1s linear; }
+        .options-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .option { padding: 15px; border: 2px solid #f1f2f6; border-radius: 12px; cursor: pointer; font-weight: 500; transition: 0.2s; text-align: center; }
+        .correct-opt { background: #dff9fb !important; border-color: #2ecc71 !important; color: #27ae60; }
+        .wrong-opt { background: #ffeaa7 !important; border-color: #e74c3c !important; color: #c0392b; }
+        .feedback { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; background: #f8f9fa; text-align: right; border-right: 5px solid var(--primary-color); line-height: 1.6; }
+        .summary-item { padding: 15px; border-bottom: 1px solid #eee; margin-bottom: 10px; border-radius: 8px; text-align: right; }
+        .summary-correct { background-color: var(--correct-bg); border-right: 5px solid #28a745; }
+        .summary-wrong { background-color: var(--wrong-bg); border-right: 5px solid #dc3545; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div class="header-info">
+        <div style="font-weight: bold; color: var(--primary-color);">ثانوية الأمير عبدالمجيد</div>
+        <div style="color: #7f8c8d;">أ / عبدالعزيز الفيفي</div>
+        <h1>اختبار القدرات - النموذج الثامن</h1>
+    </div>
+
+    <div id="start-page">
+        <p>مرحباً بك في تحدي التناظر اللفظي (النموذج 8)</p>
+        <input type="text" id="studentName" placeholder="اكتب اسمك هنا لبدء التحدي...">
+        <br>
+        <button class="btn" onclick="startQuiz()">ابدأ التحدي</button>
+    </div>
+
+    <div id="quiz-page" class="hidden">
+        <div class="challenger-badge">المتحدي: <span id="display-name"></span></div>
+        <div style="display: flex; justify-content: space-between;">
+            <span>السؤال: <b id="q-num">1</b> / 38</span>
+            <span style="color: #e74c3c;">الوقت: <b id="timer-text">45</b> ث</span>
+        </div>
+        <div class="timer-bar"><div id="timer-line" class="timer-progress"></div></div>
+        <h2 id="question-text"></h2>
+        <div class="options-container" id="options"></div>
+        <div id="feedback" class="feedback"></div>
+        <button id="next-btn" class="btn hidden" onclick="loadNextQuestion()">السؤال التالي</button>
+    </div>
+
+    <div id="result-page" class="hidden">
+        <h2 id="score-text"></h2>
+        <div id="quiz-summary"></div>
+        <button class="btn" onclick="location.reload()">إعادة الاختبار</button>
+    </div>
+</div>
+
+<script>
+    const masterQuestions = [
+        // علاقة الجمع ومفرده (35)
+        { q: "تقي : أتقياء", correct: "وفي : أوفياء", a: ["وفي : أوفياء", "شقي : أشقياء", "غبي : أغبياء", "نبي : أنبياء"], why: "العلاقة (مفرد وجمعه): تقي جمعها أتقياء ووفي جمعها أوفياء." },
+        { q: "شقي : أشقياء", correct: "غبي : أغبياء", a: ["غبي : أغبياء", "نبي : أنبياء", "تقي : أتقياء", "وفي : أوفياء"], why: "العلاقة (مفرد وجمعه): شقي جمعها أشقياء وغبي جمعها أغبياء." },
+        
+        // علاقة التتالي أو التتابع (36)
+        { q: "صافرة : ابتداء", correct: "حمل : ولادة", a: ["حمل : ولادة", "هبوط : توقف", "تشغيل : انطلاق", "بناء : سكن"], why: "العلاقة (تتابع): الصافرة يتبعها ابتداء والحمل يتبعه ولادة." },
+        { q: "هبوط : توقف", correct: "تشغيل : انطلاق", a: ["تشغيل : انطلاق", "حمل : ولادة", "صافرة : ابتداء", "تعب : نوم"], why: "العلاقة (تتابع): الهبوط يتبعه توقف والتشغيل يتبعه انطلاق." },
+        
+        // تكرار الأسئلة وتوسعتها لتكملة العدد 38
+        { q: "أتقياء : تقي", correct: "أوفياء : وفي", a: ["أوفياء : وفي", "أشقياء : شقي", "أغبياء : غبي", "أنبياء : نبي"], why: "العلاقة (جمع ومفرده): أتقياء مفردها تقي وأوفياء مفردها وفي." },
+        { q: "أشقياء : شقي", correct: "أغبياء : غبي", a: ["أغبياء : غبي", "أتقياء : تقي", "أوفياء : وفي", "كرماء : كريم"], why: "العلاقة (جمع ومفرده): أشقياء مفردها شقي وأغبياء مفردها غبي." },
+        { q: "ابتداء : صافرة", correct: "ولادة : حمل", a: ["ولادة : حمل", "توقف : هبوط", "انطلاق : تشغيل", "نجاح : مذاكرة"], why: "العلاقة (تتابع عكسي): الابتداء يأتي بعد الصافرة والولادة بعد الحمل." },
+        { q: "توقف : هبوط", correct: "انطلاق : تشغيل", a: ["انطلاق : تشغيل", "ولادة : حمل", "ابتداء : صافرة", "راحة : عمل"], why: "العلاقة (تتابع عكسي): التوقف يأتي بعد الهبوط والانطلاق بعد التشغيل." },
+        { q: "نبي : أنبياء", correct: "ولي : أولياء", a: ["ولي : أولياء", "شقي : أشقياء", "تقي : أتقياء", "غبي : أغبياء"], why: "العلاقة (مفرد وجمعه): نبي جمعها أنبياء وولي جمعها أولياء." },
+        { q: "حمل : ولادة", correct: "هبوط : توقف", a: ["هبوط : توقف", "تشغيل : انطلاق", "صافرة : ابتداء", "أكل : شبع"], why: "العلاقة (تتابع): الحمل يتبعه ولادة والهبوط يتبعه توقف." },
+        { q: "غبي : أغبياء", correct: "شقي : أشقياء", a: ["شقي : أشقياء", "تقي : أتقياء", "وفي : أوفياء", "كريم : كرماء"], why: "العلاقة (مفرد وجمعه): غبي جمعها أغبياء وشقي جمعها أشقياء." },
+        { q: "تشغيل : انطلاق", correct: "صافرة : ابتداء", a: ["صافرة : ابتداء", "حمل : ولادة", "هبوط : توقف", "قراءة : فهم"], why: "العلاقة (تتابع): التشغيل يتبعه انطلاق والصافرة يتبعها ابتداء." },
+        { q: "أوفياء : وفي", correct: "أتقياء : تقي", a: ["أتقياء : تقي", "أشقياء : شقي", "أغبياء : غبي", "عظماء : عظيم"], why: "العلاقة (جمع ومفرده): أوفياء مفردها وفي وأتقياء مفردها تقي." },
+        { q: "ولادة : حمل", correct: "انطلاق : تشغيل", a: ["انطلاق : تشغيل", "توقف : هبوط", "ابتداء : صافرة", "نتيجة : سبب"], why: "العلاقة (ما قبل وما بعد): الولادة يسبقها حمل والانطلاق يسبقه تشغيل." },
+        { q: "تقي : أتقياء", correct: "شقي : أشقياء", a: ["شقي : أشقياء", "غبي : أغبياء", "وفي : أوفياء", "نقي : أنقياء"], why: "العلاقة (مفرد وجمعه): تقي أتقياء وشقي أشقياء." },
+        { q: "صافرة : ابتداء", correct: "تشغيل : انطلاق", a: ["تشغيل : انطلاق", "هبوط : توقف", "حمل : ولادة", "سعي : وصول"], why: "العلاقة (تتابع): الصافرة للابتداء والتشغيل للانطلاق." },
+        { q: "أغبياء : غبي", correct: "أشقياء : شقي", a: ["أشقياء : شقي", "أتقياء : تقي", "أوفياء : وفي", "أذكياء : ذكي"], why: "العلاقة (جمع ومفرده): الأغبياء مفردها غبي والأشقياء مفردها شقي." },
+        { q: "توقف : هبوط", correct: "ابتداء : صافرة", a: ["ابتداء : صافرة", "ولادة : حمل", "انطلاق : تشغيل", "فراغ : امتلاء"], why: "العلاقة (تتابع): التوقف بعد الهبوط والابتداء بعد الصافرة." },
+        { q: "وفي : أوفياء", correct: "تقي : أتقياء", a: ["تقي : أتقياء", "غبي : أغبياء", "نبي : أنبياء", "شجي : أشجياء"], why: "العلاقة (مفرد وجمع): وفي أوفياء وتقي أتقياء." },
+        { q: "حمل : ولادة", correct: "صافرة : ابتداء", a: ["صافرة : ابتداء", "تشغيل : انطلاق", "هبوط : توقف", "شتاء : صيف"], why: "العلاقة (تتابع): الحمل يليه ولادة والصافرة يليها ابتداء." },
+        { q: "أتقياء : تقي", correct: "أغبياء : غبي", a: ["أغبياء : غبي", "أوفياء : وفي", "أشقياء : شقي", "أولياء : ولي"], why: "العلاقة (جمع ومفرده): أتقياء تقي وأغبياء غبي." },
+        { q: "هبوط : توقف", correct: "حمل : ولادة", a: ["حمل : ولادة", "تشغيل : انطلاق", "صافرة : ابتداء", "إعداد : تقديم"], why: "العلاقة (تتابع): الهبوط يتبعه توقف والحمل يتبعه ولادة." },
+        { q: "شقي : أشقياء", correct: "وفي : أوفياء", a: ["وفي : أوفياء", "تقي : أتقياء", "نبي : أنبياء", "غبي : أغبياء"], why: "العلاقة (مفرد وجمعه): شقي أشقياء ووفي أوفياء." },
+        { q: "ابتداء : صافرة", correct: "انطلاق : تشغيل", a: ["انطلاق : تشغيل", "ولادة : حمل", "توقف : هبوط", "نهاية : بداية"], why: "العلاقة (تتابع): الابتداء بعد الصافرة والانطلاق بعد التشغيل." },
+        { q: "أوفياء : وفي", correct: "أشقياء : شقي", a: ["أشقياء : شقي", "أتقياء : تقي", "أغبياء : غبي", "أنبياء : نبي"], why: "العلاقة (جمع ومفرده): أوفياء وفي وأشقياء شقي." },
+        { q: "تشغيل : انطلاق", correct: "هبوط : توقف", a: ["هبوط : توقف", "صافرة : ابتداء", "حمل : ولادة", "دراسة : تخرج"], why: "العلاقة (تتابع): التشغيل يليه انطلاق والهبوط يليه توقف." },
+        { q: "غبي : أغبياء", correct: "تقي : أتقياء", a: ["تقي : أتقياء", "شقي : أشقياء", "وفي : أوفياء", "نبي : أنبياء"], why: "العلاقة (مفرد وجمعه): غبي أغبياء وتقي أتقياء." },
+        { q: "توقف : هبوط", correct: "ولادة : حمل", a: ["ولادة : حمل", "ابتداء : صافرة", "انطلاق : تشغيل", "سلام : صلاة"], why: "العلاقة (تتابع): التوقف بعد الهبوط والولادة بعد الحمل." },
+        { q: "أتقياء : تقي", correct: "أوفياء : وفي", a: ["أوفياء : وفي", "أشقياء : شقي", "أغبياء : غبي", "أصفياء : صفي"], why: "العلاقة (جمع ومفرده): أتقياء تقي وأوفياء وفي." },
+        { q: "صافرة : ابتداء", correct: "حمل : ولادة", a: ["حمل : ولادة", "هبوط : توقف", "تشغيل : انطلاق", "نداء : صلاة"], why: "العلاقة (تتابع): الصافرة يتبعها ابتداء والحمل يتبعه ولادة." },
+        { q: "أشقياء : شقي", correct: "أغبياء : غبي", a: ["أغبياء : غبي", "أتقياء : تقي", "أوفياء : وفي", "أنقياء : نقي"], why: "العلاقة (جمع ومفرده): أشقياء شقي وأغبياء غبي." },
+        { q: "هبوط : توقف", correct: "تشغيل : انطلاق", a: ["تشغيل : انطلاق", "حمل : ولادة", "صافرة : ابتداء", "أداء : تقييم"], why: "العلاقة (تتابع): الهبوط توقف والتشغيل انطلاق." },
+        { q: "وفي : أوفياء", correct: "غبي : أغبياء", a: ["غبي : أغبياء", "تقي : أتقياء", "شقي : أشقياء", "نبي : أنبياء"], why: "العلاقة (مفرد وجمع): وفي أوفياء وغبي أغبياء." },
+        { q: "انطلاق : تشغيل", correct: "ابتداء : صافرة", a: ["ابتداء : صافرة", "ولادة : حمل", "توقف : هبوط", "وصول : انطلاق"], why: "العلاقة (تتابع): الانطلاق بعد التشغيل والابتداء بعد الصافرة." },
+        { q: "أغبياء : غبي", correct: "أتقياء : تقي", a: ["أتقياء : تقي", "أوفياء : وفي", "أشقياء : شقي", "أنبياء : نبي"], why: "العلاقة (جمع ومفرده): أغبياء غبي وأتقياء تقي." },
+        { q: "ولادة : حمل", correct: "توقف : هبوط", a: ["توقف : هبوط", "ابتداء : صافرة", "انطلاق : تشغيل", "نتيجة : مقدمة"], why: "العلاقة (تتابع): الولادة بعد الحمل والتوقف بعد الهبوط." },
+        { q: "تقي : أتقياء", correct: "وفي : أوفياء", a: ["وفي : أوفياء", "شقي : أشقياء", "غبي : أغبياء", "نقي : أنقياء"], why: "العلاقة (مفرد وجمعه): تقي أتقياء ووفي أوفياء." },
+        { q: "تشغيل : انطلاق", correct: "صافرة : ابتداء", a: ["صافرة : ابتداء", "حمل : ولادة", "هبوط : توقف", "عقد : تنفيذ"], why: "العلاقة (تتابع): التشغيل انطلاق والصافرة ابتداء." }
+    ];
+
+    let questions = []; let currentQ = 0; let score = 0; let timer; let timeLeft = 45; let userAnswers = [];
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function startQuiz() {
+        const nameInput = document.getElementById('studentName');
+        const name = nameInput.value.trim();
+        if(!name) { alert("من فضلك اكتب اسمك"); return; }
+        document.getElementById('display-name').innerText = name;
+        questions = shuffle([...masterQuestions]);
+        document.getElementById('start-page').classList.add('hidden');
+        document.getElementById('quiz-page').classList.remove('hidden');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if(currentQ >= questions.length) { finishQuiz(); return; }
+        const qData = questions[currentQ];
+        const shuffledOptions = shuffle([...qData.a]);
+        document.getElementById('q-num').innerText = currentQ + 1;
+        document.getElementById('question-text').innerText = qData.q;
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').classList.add('hidden');
+        const optDiv = document.getElementById('options');
+        optDiv.innerHTML = '';
+        shuffledOptions.forEach(opt => {
+            const d = document.createElement('div');
+            d.className = 'option'; d.innerText = opt;
+            d.onclick = () => checkAnswer(opt, d);
+            optDiv.appendChild(d);
+        });
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timer); timeLeft = 45;
+        const line = document.getElementById('timer-line');
+        const txt = document.getElementById('timer-text');
+        timer = setInterval(() => {
+            timeLeft--; txt.innerText = timeLeft;
+            line.style.width = (timeLeft/45)*100 + '%';
+            if(timeLeft <= 0) { clearInterval(timer); checkAnswer(null, null); }
+        }, 1000);
+    }
+
+    function checkAnswer(sel, el) {
+        clearInterval(timer);
+        const qData = questions[currentQ];
+        const isCorrect = (sel === qData.correct);
+        userAnswers.push({ q: qData.q, sel: sel || "تجاوز الوقت", cor: qData.correct, isCorrect, why: qData.why });
+        document.querySelectorAll('.option').forEach(o => o.onclick = null);
+        if(isCorrect) { score++; if(el) el.classList.add('correct-opt'); } 
+        else { if(el) el.classList.add('wrong-opt'); document.querySelectorAll('.option').forEach(o => { if(o.innerText === qData.correct) o.classList.add('correct-opt'); }); }
+        const f = document.getElementById('feedback');
+        f.innerHTML = `<strong>${isCorrect ? '✅ رائع' : '❌ خطأ'}</strong><br>${qData.why}`;
+        f.style.display = 'block';
+        document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function loadNextQuestion() { currentQ++; loadQuestion(); }
+
+    function finishQuiz() {
+        document.getElementById('quiz-page').classList.add('hidden');
+        document.getElementById('result-page').classList.remove('hidden');
+        const name = document.getElementById('studentName').value;
+        document.getElementById('score-text').innerHTML = `المتحدي: ${name}<br>النتيجة: ${score} من 38`;
+        const sum = document.getElementById('quiz-summary');
+        userAnswers.forEach((ans, i) => {
+            const d = document.createElement('div');
+            d.className = `summary-item ${ans.isCorrect ? 'summary-correct' : 'summary-wrong'}`;
+            d.innerHTML = `<b>س${i+1}: ${ans.q}</b><br>إجابتك: ${ans.sel} | الصحيحة: ${ans.cor}<br><small>${ans.why}</small>`;
+            sum.appendChild(d);
+        });
+    }
+</script>
+</body>
+</html>
